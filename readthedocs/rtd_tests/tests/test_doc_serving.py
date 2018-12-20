@@ -58,6 +58,16 @@ class TestPrivateDocs(BaseDocServing):
             )
 
     @override_settings(PYTHON_MEDIA=False)
+    def test_private_nginx_serving_unicode_filename(self):
+        with mock.patch('readthedocs.core.views.serve.os.path.exists', return_value=True):
+            request = self.request(self.private_url, user=self.eric)
+            r = _serve_symlink_docs(request, project=self.private, filename='/en/latest/úñíčódé.html', privacy_level='private')
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(
+                r._headers['x-accel-redirect'][1], '/private_web_root/private/en/latest/%C3%BA%C3%B1%C3%AD%C4%8D%C3%B3d%C3%A9.html'
+            )
+
+    @override_settings(PYTHON_MEDIA=False)
     def test_private_files_not_found(self):
         request = self.request(self.private_url, user=self.eric)
         with self.assertRaises(Http404) as exc:
